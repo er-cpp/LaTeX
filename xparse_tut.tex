@@ -1,0 +1,147 @@
+\documentclass{l3doc}
+\usepackage{expl3}
+\usepackage{xparse}
+\usepackage{multicol}
+\usepackage{ccaption}
+\usepackage{marginnote}
+\usepackage{color}
+\usepackage{cprotect} % TODO expl3?
+\usepackage{biblatex}
+\usepackage{cleveref}
+
+\cprotect \title{\verb|xparse| cheatsheet}
+
+\author{Erwann Rogard\thanks{firstname dot lastname AusTria gmail dot com}}
+
+\RenewDocumentCommand{\DescribeMacro}{m}{\marginnote{\raggedleft\cs{#1}}\noindent}
+
+
+\begin{document}
+
+\maketitle
+
+%\begin{abstract}Title says it all\end{abstract}
+
+
+\section*{Syntax}
+
+%\DescribeMacro{NewDocumentCommand}
+\noindent\verb|\NewDocumentCommand|\marg{token}\marg{pars}\marg{code} 
+makes \meta{token} a command whose arguments, \meta{args}, must conform to \meta{pars}. 
+If applicable, \meta{token}\meta{args} executes \meta{code} with \verb|#1|, \verb|#2|, \verb|#3| etc. 
+replaced by \meta{args}.
+
+
+\begin{table}[htp]
+\caption{Hello~World!}\label{xparse:helloworld}
+\textbf{Input}% TODO rm invisible lineabreak?
+\begin{verbatim}
+  \NewDocumentCommand{\foo}{m}{Hello~#1!}
+  \foo{World}
+\end{verbatim}
+\textbf{Output}\\
+\NewDocumentCommand{\foo}{m}{Hello~#1!}
+\foo{World}
+\end{table}
+
+\begin{table}[htp]\caption{Mandatory arguments}\label{xparse:mandat}
+\NewDocumentCommand{\foo}{m}{Hello~#1!}
+\begin{tabular}{lll}
+	\multicolumn{2}{c}{Input} 					& Output\\\hline
+	\meta{par}	& \meta{token}\meta{arg}		& \\
+	\verb|l|		& \verb|\foo World{~Garbage}|	& \RenewDocumentCommand{\foo}{l}{Hello~#1!}\foo World{~Garbage}\\
+	\verb|m|	& \verb|\foo{World}|			& \foo{World}\\
+				& \verb|\foo W{orld}| 			& \foo World\\
+	\verb|r<]| 	& \verb|\foo|					& \verb|! Failed to find ...|\\	%\RenewDocumentCommand{\foo}{r<]}{Hello~#1!}\foo
+			 	& \verb|\foo<World]|			& \RenewDocumentCommand{\foo}{r<]}{Hello~#1!}\foo<World]\\	
+	\verb|R<]{World}|
+				& \verb|\foo|					& {\color{red} \verb|! Failed to find ...| }\\ %\RenewDocumentCommand{\foo}{R<]{World}}{Hello~#1!}\foo\\	
+				& \verb|\foo<Universe]|			&  \RenewDocumentCommand{\foo}{R<]{World}}{Hello~#1!}\foo<Universe]\\	
+	\verb+u{|}+ 	& \verb|\foo|				& \verb|! Forbidden control sequence|\\%\RenewDocumentCommand{\foo}{u{|}}{Hello~#1!}\foo\\
+				& \verb+\foo|World|+			& \RenewDocumentCommand{\foo}{u{|}}{Hello~#1!}\foo World|\\
+	\verb|v|	& \verb+\foo|World|+			&\RenewDocumentCommand{\foo}{v}{Hello~#1!}\foo|World|\\ %TODO
+\end{tabular}
+\legend{Assumes the same \meta{code} as \autoref{xparse:helloworld}}
+\end{table}
+
+\begin{table}[htp]
+\caption{Hello~World!}\label{xparse:helloworldt}
+\textbf{Input}
+\begin{verbatim}
+  \NewDocumentCommand{\foo}{s}{Hello~\IfBooleanTF{#1}{World}{Universe}!}
+  \foo*
+\end{verbatim}
+\textbf{Output}
+  \NewDocumentCommand{\foo}{s}{Hello~\IfBooleanTF{#1}{World}{Universe}!}
+  \foo*
+\end{table}
+
+
+\begin{table}[htp]\caption{Optional arguments}\label{xparse:optional}
+\NewDocumentCommand{\foo}{m}{Hello~#1!}
+\begin{tabular}{lll}
+	\multicolumn{2}{c}{Input} 					& Output\\\hline
+	\meta{par}	& \meta{token}\meta{arg}		& \\
+		\verb|d<>|				& \verb|\foo|			& \RenewDocumentCommand{\foo}{d<>}{Hello~#1!}\foo\\
+								& \verb|\foo<World>|	& \RenewDocumentCommand{\foo}{d<>}{Hello~#1!}\foo<World>\\
+		\verb|D<>{Universe}|	& \verb|\foo|			& \RenewDocumentCommand{\foo}{D<>{Universe}}{Hello~#1!}\foo\\
+								& \verb|\foo<World>|	& \RenewDocumentCommand{\foo}{D<>{Universe}}{Hello~#1!}\foo<World>\\
+		\verb|e{_}|				& \verb|\foo|			& \RenewDocumentCommand{\foo}{e{_}}{Hello~#1!}\foo\\
+								& \verb|\foo_{World}|	& \RenewDocumentCommand{\foo}{e{_}}{Hello~#1!}\foo_{World}\\
+		\verb|E{_}{Universe}|	& \verb|\foo|			& \RenewDocumentCommand{\foo}{E{_}{}}{Hello~#1!}\foo\\
+								& \verb|\foo_{World}|	& \RenewDocumentCommand{\foo}{E{_}{}}{Hello~#1!}\foo_{World}\\
+		\verb|g|				& \verb|\foo|			& \RenewDocumentCommand{\foo}{g}{Hello~#1!}\foo\\
+								& \verb|\foo{World}|	& \RenewDocumentCommand{\foo}{g}{Hello~#1!}\foo{World}\\	
+		\verb|G{Universe}|		& \verb|\foo|			& \RenewDocumentCommand{\foo}{G{Universe}}{Hello~#1!}\foo\\
+								& \verb|\foo{World}|	& \RenewDocumentCommand{\foo}{G{Universe}}{Hello~#1!}\foo{World}\\	
+		\verb|o|				& \verb|\foo|			& \RenewDocumentCommand{\foo}{o}{Hello~#1!}\foo\\
+								& \verb|\foo[World]|		& \RenewDocumentCommand{\foo}{o}{Hello~#1!}\foo[World]\\
+		\verb|O{Universe}|		& \verb|\foo|			& \RenewDocumentCommand{\foo}{O{Universe}}{Hello~#1!}\foo\\
+								& \verb|\foo[World]|		& \RenewDocumentCommand{\foo}{O{Universe}}{Hello~#1!}\foo[World]\\
+\end{tabular}
+\legend{Assumes the same \meta{code} as \autoref{xparse:helloworld}}
+\end{table}
+
+\begin{table}[htp]\caption{Optional characters}\label{xparse:optchar}
+\NewDocumentCommand{\foo}{m}{Hello~#1!}
+\begin{tabular}{lll}
+	\multicolumn{2}{c}{Input} 				& Output\\\hline
+	\meta{par}	& \meta{token}\meta{arg}		& \\
+		\verb|s|			& \verb|\foo| 	& \RenewDocumentCommand{\foo}{s}{Hello~\IfBooleanTF{#1}{World}{Universe}!}\foo\\
+							& \verb|\foo*|    & \RenewDocumentCommand{\foo}{s}{Hello~\IfBooleanTF{#1}{World}{Universe}!}\foo*\\
+		\verb|t+|			& \verb|\foo|	& \RenewDocumentCommand{\foo}{t+}{Hello~\IfBooleanTF{#1}{World}{Universe}!}\foo\\
+							& \verb|\foo+|	& \RenewDocumentCommand{\foo}{t+}{Hello~\IfBooleanTF{#1}{World}{Universe}!}\foo+
+\end{tabular}
+\legend{Assumes the same \meta{code} as \autoref{xparse:helloworldt}}
+\end{table}
+
+\section*{List of macros}
+
+\cs{RenewNewDocumentCommand}\\
+\cs{RenewDocumentCommand}\\
+\cs{ProvideDocumentCommand}\\
+\cs{DeclareDocumentCommand}\\
+\cs{NewDocumentEnvironment}\\
+\cs{RenewDocumentEnvironment}\\
+\cs{ProvideDocumentEnvironment}\\
+\cs{DeclareDocumentEnvironment}\\
+\cs{NewExpandableDocumentCommand}\\
+\cs{RenewExpandableDocumentCommand}\\
+\cs{ProvideExpandableDocumentCommand}\\
+\cs{DeclareExpandableDocumentCommand}\\
+\cs{IfNoValue(TF)}\\
+\cs{IfValue(TF)}\\
+\cs{IfBoolean(TF)}
+
+
+\section*{Acknowledment}
+
+Thanks to \url{latex.org} for its invaluable help
+
+\begin{thebibliography}{1}
+
+\bibitem{key} The \LaTeX3 Project Team {\em l3packages}  \url{http://mirror.ctan.org/macros/latex/contrib/l3packages/}
+
+\end{thebibliography}
+
+\end{document}
