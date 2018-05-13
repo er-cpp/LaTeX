@@ -2,39 +2,39 @@
 \usepackage{expl3}
 \usepackage{xparse}
 \usepackage{multicol}
+\usepackage{float}
 \usepackage{ccaption}
 \usepackage{marginnote}
 \usepackage{color}
-\usepackage{cprotect} % TODO expl3?
+\usepackage{cprotect} 
+\usepackage{changes}
 \usepackage{biblatex}
 \usepackage{cleveref}
 
-\cprotect \title{\verb|xparse| cheatsheet}
+\cprotect \title{\pkg{xparse} cheatsheet}
 
 \author{Erwann Rogard\thanks{firstname dot lastname AusTria gmail dot com}}
 
-\RenewDocumentCommand{\DescribeMacro}{m}{\marginnote{\raggedleft\cs{#1}}\noindent}
-
-
+\RenewDocumentCommand{\DescribeMacro}{m}{\marginnote{\raggedleft\cs{#1}}}
+    
 \begin{document}
 
 \maketitle
 
-%\begin{abstract}Title says it all\end{abstract}
+\begin{abstract}\cs{NewDocumentCommand} is the new \cs{newcommand}. Some examples.\end{abstract}
 
 
-\section*{Syntax}
-
-%\DescribeMacro{NewDocumentCommand}
-\noindent\verb|\NewDocumentCommand|\marg{token}\marg{pars}\marg{code} 
+\DescribeMacro{NewDocumentCommand}
+\cs{NewDocumentCommand}\marg{token}\marg{pars}\marg{code} 
 makes \meta{token} a command whose arguments, \meta{args}, must conform to \meta{pars}. 
-If applicable, \meta{token}\meta{args} executes \meta{code} with \verb|#1|, \verb|#2|, \verb|#3| etc. 
+If applicable, \meta{token}\meta{args} expands to \meta{code} with \verb|#1|, \verb|#2|, \verb|#3| etc. 
 replaced by \meta{args}.
 
 
-\begin{table}[htp]
-\caption{Hello~World!}\label{xparse:helloworld}
-\textbf{Input}% TODO rm invisible lineabreak?
+\floatstyle{ruled}
+\newfloat{Program}{h}{lop}%[section]
+\begin{Program}
+\textbf{Input}
 \begin{verbatim}
   \NewDocumentCommand{\foo}{m}{Hello~#1!}
   \foo{World}
@@ -42,7 +42,8 @@ replaced by \meta{args}.
 \textbf{Output}\\
 \NewDocumentCommand{\foo}{m}{Hello~#1!}
 \foo{World}
-\end{table}
+\caption{Hello~World!}\label{code:helloworld}
+\end{Program}
 
 \begin{table}[htp]\caption{Mandatory arguments}\label{xparse:mandat}
 \NewDocumentCommand{\foo}{m}{Hello~#1!}
@@ -52,29 +53,34 @@ replaced by \meta{args}.
 	\verb|l|		& \verb|\foo World{~Garbage}|	& \RenewDocumentCommand{\foo}{l}{Hello~#1!}\foo World{~Garbage}\\
 	\verb|m|	& \verb|\foo{World}|			& \foo{World}\\
 				& \verb|\foo W{orld}| 			& \foo World\\
+	\verb|+m|	& \verb|\foo{World\par...}|		& \RenewDocumentCommand{\foo}{+m}{Hello~#1!}\foo{World\par\ldots}\\
 	\verb|r<]| 	& \verb|\foo|					& \verb|! Failed to find ...|\\	%\RenewDocumentCommand{\foo}{r<]}{Hello~#1!}\foo
 			 	& \verb|\foo<World]|			& \RenewDocumentCommand{\foo}{r<]}{Hello~#1!}\foo<World]\\	
 	\verb|R<]{World}|
 				& \verb|\foo|					& {\color{red} \verb|! Failed to find ...| }\\ %\RenewDocumentCommand{\foo}{R<]{World}}{Hello~#1!}\foo\\	
 				& \verb|\foo<Universe]|			&  \RenewDocumentCommand{\foo}{R<]{World}}{Hello~#1!}\foo<Universe]\\	
-	\verb+u{|}+ 	& \verb|\foo|				& \verb|! Forbidden control sequence|\\%\RenewDocumentCommand{\foo}{u{|}}{Hello~#1!}\foo\\
-				& \verb+\foo|World|+			& \RenewDocumentCommand{\foo}{u{|}}{Hello~#1!}\foo World|\\
+	\verb+u{|}+ 	& \verb|\foo|					& \verb|! Forbidden control sequence|\\%\RenewDocumentCommand{\foo}{u{|}}{Hello~#1!}\foo\\
+				& \verb+\foo World|+			& \RenewDocumentCommand{\foo}{u{|}}{Hello~#1!}\foo World|\\
 	\verb|v|	& \verb+\foo|World|+			&\RenewDocumentCommand{\foo}{v}{Hello~#1!}\foo|World|\\ %TODO
 \end{tabular}
-\legend{Assumes the same \meta{code} as \autoref{xparse:helloworld}}
+\legend{Same \meta{code} as Program~\ref{code:helloworld}}
 \end{table}
 
-\begin{table}[htp]
-\caption{Hello~World!}\label{xparse:helloworldt}
+\floatstyle{ruled}
+\newfloat{Program}{h}{lop}%[section]
+\begin{Program}
 \textbf{Input}
 \begin{verbatim}
   \NewDocumentCommand{\foo}{s}{Hello~\IfBooleanTF{#1}{World}{Universe}!}
+  \foo\\
   \foo*
 \end{verbatim}
-\textbf{Output}
+\textbf{Output}\\
   \NewDocumentCommand{\foo}{s}{Hello~\IfBooleanTF{#1}{World}{Universe}!}
+  \foo\\
   \foo*
-\end{table}
+\caption{Hello~World!}\label{code:helloworldt}
+\end{Program}
 
 
 \begin{table}[htp]\caption{Optional arguments}\label{xparse:optional}
@@ -99,7 +105,7 @@ replaced by \meta{args}.
 		\verb|O{Universe}|		& \verb|\foo|			& \RenewDocumentCommand{\foo}{O{Universe}}{Hello~#1!}\foo\\
 								& \verb|\foo[World]|		& \RenewDocumentCommand{\foo}{O{Universe}}{Hello~#1!}\foo[World]\\
 \end{tabular}
-\legend{Assumes the same \meta{code} as \autoref{xparse:helloworld}}
+\legend{Same \meta{code} as Program~\autoref{code:helloworld}}
 \end{table}
 
 \begin{table}[htp]\caption{Optional characters}\label{xparse:optchar}
@@ -112,11 +118,11 @@ replaced by \meta{args}.
 		\verb|t+|			& \verb|\foo|	& \RenewDocumentCommand{\foo}{t+}{Hello~\IfBooleanTF{#1}{World}{Universe}!}\foo\\
 							& \verb|\foo+|	& \RenewDocumentCommand{\foo}{t+}{Hello~\IfBooleanTF{#1}{World}{Universe}!}\foo+
 \end{tabular}
-\legend{Assumes the same \meta{code} as \autoref{xparse:helloworldt}}
+\legend{Assumes the same \meta{code} as Program~\ref{code:helloworldt}}
 \end{table}
 
 \section*{List of macros}
-
+	
 \cs{RenewNewDocumentCommand}\\
 \cs{RenewDocumentCommand}\\
 \cs{ProvideDocumentCommand}\\
@@ -137,6 +143,10 @@ replaced by \meta{args}.
 \section*{Acknowledment}
 
 Thanks to \url{latex.org} for its invaluable help
+
+\section*{Change log}
+
+
 
 \begin{thebibliography}{1}
 
